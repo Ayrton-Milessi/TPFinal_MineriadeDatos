@@ -1,4 +1,4 @@
-# TPFinal_MineriadeDatos
+# Minería de Datos - Data Mining
 
 </details>
 
