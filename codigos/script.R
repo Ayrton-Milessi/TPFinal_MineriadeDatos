@@ -11,7 +11,7 @@ library(lubridate)
 library(arulesSequences)
 
 # Abrimos el archivo
-datos <- fread("e-shop clothing 2008.csv", sep = ";")
+datos <- fread("archivos/e-shop clothing 2008.csv", sep = ";")
 
 #==================================Consigna A===================================
 # Exploramos los datos
@@ -227,11 +227,11 @@ datos_secuenciales <- datos %>%
          item = `page 2 (clothing model)`)
 
 # Guardamos las variables en un archivo txt para luego abrirlo en el formato que se necesita
-write.table(datos_secuenciales, file = "datos_secuenciales.txt",
+write.table(datos_secuenciales, file = "archivos/datos_secuenciales.txt",
             sep = " ", quote = FALSE, row.names = FALSE, col.names = FALSE)
 
 # Leemos el archivo
-datos_secuenciales <- read_baskets("datos_secuenciales.txt", info = c("sequenceID", "eventID"))
+datos_secuenciales <- read_baskets("archivos/datos_secuenciales.txt", info = c("sequenceID", "eventID"))
 
 # Algoritmo Spade
 secuencias <- cspade(datos_secuenciales,
