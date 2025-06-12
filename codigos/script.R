@@ -3,12 +3,13 @@ rm(list = ls())
 
 # Librerias
 library(arules)
+library(arulesViz)
+library(arulesSequences)
 library(readr)
-library(data.table)
 library(dplyr)
 library(ggplot2)
 library(lubridate)
-library(arulesSequences)
+library(data.table)
 
 # Abrimos el archivo
 datos <- fread("archivos/e-shop clothing 2008.csv", sep = ";")
@@ -22,13 +23,13 @@ head(datos)
 # Como vimos que la mayoria de las variables contenian numeros que asociaban a una categoria,
 #decidimos transfomar estas variables
 
-# Union de las columnas dia, mes, año
+# Unimos las variables year, month, day y creamos una nueva variable "Fecha"
 datos <- datos %>%
   mutate(Fecha = as.Date(paste(year, month, day, sep = "-")))
 datos <- datos %>%
   select(-year, -month, -day)
 
-# Mapeo de los id de los paises
+# Mapeamos los id de los paises
 paises <- c("1"="Australia", "2"="Austria", "3"="Belgium", "4"="British Virgin Islands", "5"="Cayman Islands",
             "6"="Christmas Island", "7"="Croatia", "8"="Cyprus", "9"="Czech Republic", "10"="Denmark",
             "11"="Estonia", "12"="unidentified", "13"="Faroe Islands", "14"="Finland", "15"="France", "16"="Germany",
@@ -41,28 +42,28 @@ paises <- c("1"="Australia", "2"="Austria", "3"="Belgium", "4"="British Virgin I
             "45" = "int (*.int)", "46" = "net (*.net)", "47" = "org (*.org)")
 datos$country <- paises[as.character(datos$country)]
 
-# Mapeo de las categorias de los productos
+# Mapeamos las categorias de los productos
 categorias <- c(
   "1" = "trousers", "2" = "skirts", "3" = "blouses","4" = "sale")
 datos$`page 1 (main category)` <- categorias[as.character(datos$`page 1 (main category)`)]
 
-# Mapeo de los colores
+# Mapeamos los colores
 colores <- c(
   "1" = "beige", "2" = "black", "3" = "blue", "4" = "brown", "5" = "burgundy",
   "6" = "gray", "7" = "green", "8" = "navy blue", "9" = "many colors", "10" = "olive",
   "11" = "pink", "12" = "red", "13" = "violet", "14" = "white")
 datos$colour <- colores[as.character(datos$colour)]
 
-# Mapeo de las posiciones en la pantalla
+# Mapeamos las posiciones en la pantalla
 posicion <- c(  "1" = "top left", "2" = "top in the middle", "3" = "top right",
                 "4" = "bottom left", "5" = "bottom in the middle", "6" = "bottom right")
 datos$location <- posicion[as.character(datos$location)]
 
-# Mapeo de las posiciones de la fotografia
+# Mapeamos las posiciones de la fotografia
 fotos <- c("1"="en face", "2"="profile")
 datos$`model photography` <- fotos[as.character(datos$`model photography`)]
 
-# Mapeo a los precios que superen la media o no
+# Mapeamos los precios que superen la media o no
 precios <- c("1"="yes", "2"="no")
 datos$`price 2` <- precios[as.character(datos$`price 2`)]
 
@@ -81,7 +82,8 @@ ggplot(clicks_por_sesion %>% filter(Clicks <= 60), aes(x = Clicks)) +
   labs(title = "Distribución de Clicks por Sesión (hasta 60)",
        x = "Cantidad de clicks",
        y = "Número de sesiones") +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Grafico de sesiones por país
 sesiones_unicas_por_pais <- datos %>%
@@ -90,12 +92,26 @@ sesiones_unicas_por_pais <- datos %>%
   arrange(desc(cantidad_sesiones))
 
 ggplot(sesiones_unicas_por_pais, aes(x = reorder(country, cantidad_sesiones), y = cantidad_sesiones)) +
-  geom_col(fill = "darkorange") +
+  geom_col(fill = "#009ACD") +
   coord_flip() +
   labs(title = "Cantidad de sesiones únicas por país",
        x = "País",
        y = "Sesiones únicas") +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Grafico de sesiones por país sin Polonia y los paises que tengan menos de 50 sesiones
+sesiones_unicas_por_pais <- sesiones_unicas_por_pais %>%
+  filter(country != "Poland", cantidad_sesiones >= 50)
+
+ggplot(sesiones_unicas_por_pais, aes(x = reorder(country, cantidad_sesiones), y = cantidad_sesiones)) +
+  geom_col(fill = "#009ACD") +
+  coord_flip() +
+  labs(title = "Cantidad de sesiones únicas por país (sin Polonia y con países con más de 50 sesiones)",
+       x = "País",
+       y = "Sesiones únicas") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Grafico de productos vistos por sesión
 productos_por_sesion <- datos %>%
@@ -103,14 +119,21 @@ productos_por_sesion <- datos %>%
   summarise(cantidad_sesiones = n_distinct(`session ID`)) %>%
   arrange(cantidad_sesiones) %>%
   slice_tail(n = 20)
+productos_por_sesion <- productos_por_sesion %>%
+  mutate(color = ifelse(row_number() == 20, "destacado", "normal"))
 
-ggplot(productos_por_sesion, aes(x = reorder(productos, -cantidad_sesiones), y = cantidad_sesiones)) +
-  geom_col(fill = "pink") + 
+ggplot(productos_por_sesion, aes(x = reorder(productos, -cantidad_sesiones), 
+                                 y = cantidad_sesiones, 
+                                 fill = color)) +
+  geom_col() + 
+  scale_fill_manual(values = c("normal" = "#FF4040", "destacado" = "#A52A2A")) +
   labs(title = "Top 20 productos más vistos por sesión",
        x = "Producto",
        y = "Sesiones únicas") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "none")  # Oculta la leyenda si no la querés
 
 # Grafico de categoría de producto por sesión
 categoria_por_sesion <- datos %>%
@@ -118,12 +141,13 @@ categoria_por_sesion <- datos %>%
   summarise(cantidad_sesiones = n_distinct(`session ID`)) %>%
   arrange(desc(cantidad_sesiones))
 
-ggplot(categoria_por_sesion, aes(x = reorder(`page 1 (main category)`, cantidad_sesiones), y = cantidad_sesiones)) +
-  geom_col(fill = "purple") + 
-  labs(title = "Productos vistos por cada sesion",
-       x = "Productos",
-       y = "Sesiones únicas") +
-  theme_minimal()
+ggplot(categoria_por_sesion, aes(x = reorder(`page 1 (main category)`, -cantidad_sesiones), y = cantidad_sesiones)) +
+  geom_col(fill = c("#458B74", "#76EEC6", "#76EEC6", "#76EEC6")) + 
+  labs(title = "Categoría de productos vistos por cada sesion",
+       x = "Categorias",
+       y = "Cantidad de sesiones únicas") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 #==================================Consigna C===================================
 # Agrupamos por mes y contamos los clicks
@@ -135,14 +159,14 @@ clicks_por_mes <- datos %>%
 # Ordenamos los meses
 clicks_por_mes$Mes <- factor(clicks_por_mes$Mes,
                              levels = c("abril", "mayo", "junio", "julio", "agosto"))
-
 # Grafico
 ggplot(clicks_por_mes, aes(x = Mes, y = Clicks)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_bar(stat = "identity", fill = c("#68228B","#BF3EFF","#BF3EFF","#BF3EFF","#BF3EFF")) +
   labs(title = "Evolución mensual de clicks",
        x = "Meses",
        y = "Cantidad de clicks") +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 #==================================Consigna D===================================
 # Número de transacciones (sesiones distintas)
@@ -189,9 +213,12 @@ reglas <- apriori(transacciones_polonia,
 # Hay 16 reglas encontradas
 reglas
 
-# Ordenamos las reglas por confianza
+# Ordenamos las reglas por soporte
 top_10 <- head(sort(reglas, decreasing = TRUE, by = "support"), 10)
 inspect(top_10)
+
+# Grafo de las reglas
+plot(reglas, method = "graph", engine = "htmlwidget")
 
 #==================================Consigna G===================================
 # Filtramos los datos
@@ -208,14 +235,28 @@ reglas <- apriori(transacciones_checa,
 # Hay 7 reglas encontradas
 reglas
 
-# Ordenamos las reglas por confianza
-top_10_checa <- head(sort(reglas, decreasing = TRUE, by = "support"), 7)
-inspect(top_10_checa)
+# Ordenamos las reglas por soporte
+top_7_checa <- head(sort(reglas, decreasing = TRUE, by = "support"), 7)
+inspect(top_7_checa)
+
+# Grafo de las reglas
+plot(reglas, method = "graph", engine = "htmlwidget")
 
 #==================================Consigna H===================================
-#Compare los resultados de los dos países. ¿Qué conclusión sobre los
-#consumidores puede obtener de los dos resultados?
- 
+#Compare los resultados de los dos países. ¿Qué conclusión sobre los consumidores puede obtener de los dos resultados?
+#"Los usuarios de Polonia que visitaban la categoría blusas, visitaban más ítems 
+#y no se quedaban con el primero, sino que navegan por el sitio web.
+#Pero esto no sucede con los usuarios de República Checa, ya que estos revelaron 
+#ser más sencillos y compactos, las asociaciones encontradas forman pequeños grupos 
+#muy definidos. Esto podría reflejar que los consumidores tienen una preferencia establecida.
+
+#Con esta comparación podemos sacar información importante para aplicar diferentes
+#estrategias de comercio y marketing. Por ejemplo, para los usuarios de Polonia podríamos 
+#facilitarle una herramienta para que pueda comparar diferentes productos, ayudando en su 
+#elección y facilitando la experiencia del usuario. Mientras que en los usuarios de 
+#República Checa, se pueden implementar la personalización de ofertas entre distintos 
+#productos de la misma categoría, incentivando la venta." 
+
 #==================================Consigna I===================================
 # Transformarmos los datos para poder buscar las frecuencias secuenciales
 datos_secuenciales <- datos %>%
@@ -240,9 +281,7 @@ secuencias <- cspade(datos_secuenciales,
 # Hay 138 secuencias
 secuencias
 
-
-# EN REVISION EN REVISION EN REVISION EN REVISION EN REVISION EN REVISION EN REVISION EN REVISION
-# Filtramos solo las secuencias que tienen más de un ítem
+# Filtramos las secuencias que tienen más de un ítem
 secuencias_filtradas <- secuencias[size(secuencias) > 1]
 
 # Nos quedamos con 18 secuencias
