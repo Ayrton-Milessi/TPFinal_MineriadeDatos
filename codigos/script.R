@@ -152,7 +152,7 @@ ggplot(categoria_por_sesion, aes(x = reorder(`page 1 (main category)`, -cantidad
 #==================================Consigna C===================================
 # Agrupamos por mes y contamos los clicks
 clicks_por_mes <- datos %>%
-  mutate(Mes = month(Fecha, label = TRUE, abbr = FALSE)) %>%
+  mutate(Mes = lubridate::month(Fecha, label = TRUE, abbr = FALSE)) %>%
   group_by(Mes) %>%
   summarise(Clicks = n())
 
