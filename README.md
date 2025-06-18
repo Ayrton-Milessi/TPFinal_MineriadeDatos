@@ -1,4 +1,26 @@
 # Minería de Datos - Data Mining
+Este repositorio contiene los archivos y códigos en R que se implementaron para el análisis de datos. El objetivo fue aplicar distintas técnicas para descubrir itemsets frecuentes, reglas de asociación y secuencias frecuentes en un gran conjunto de datos.
+
+---
+
+## 📋 Descripción del Proyecto
+El trabajo consiste en el análisis de los comportamientos de distintos usuarios en una página e-commerce.
+
+### 📈 Técnicas Aplicadas
+- **Apriori** para encontrar itemsets frecuentes y generar reglas de asociación.
+- **SPADE** para descubrimiento de secuencias frecuentes.
+
+### Objetivos:
+- Preprocesar y transformar los datos transaccionales.
+- Detectar itemsets frecuentes y generar reglas de asociación.
+- Descubrir secuencias frecuentes.
+- Visualizar y analizar los resultados obtenidos.
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+- **Lenguajes**: R
+- **Entorno**: RStudio
 
 </details>
 
