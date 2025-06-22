@@ -68,8 +68,94 @@ precios <- c("1"="yes", "2"="no")
 datos$`price 2` <- precios[as.character(datos$`price 2`)]
 
 # Exploramos los datos con las variables ya transformadas
+dim(datos)
 summary(datos)
 head(datos)
+
+# Identificamos datos vacios en cada columna
+colSums(is.na(datos))
+
+# Contamos las filas duplicadas
+sum(duplicated(datos))
+
+# Cantidad de sesiones unicas
+length(unique(datos$`session ID`)) # 24026 sesiones diferentes
+
+# Cantidad de paises unicos
+length(unique(datos$country)) # 47 paises diferentes
+
+# Grafico de clicks en cada parte de la pantalla
+clicks_por_ubicacion <- datos %>%
+  count(location, name = "clicks")
+
+ubicaciones <- tibble(
+  location = c("top left", "top in the middle", "top right",
+               "bottom left", "bottom in the middle", "bottom right"),
+  x = c(1, 2, 3, 1, 2, 3),
+  y = c(2, 2, 2, 1, 1, 1))
+
+datos_plot <- left_join(ubicaciones, clicks_por_ubicacion, by = "location")
+
+ggplot(datos_plot, aes(x = x, y = y)) +
+  geom_tile(aes(fill = clicks), width = 0.9, height = 0.9, color = "white") +
+  geom_text(aes(label = paste0(location, "\n", clicks)), size = 4, color = "white") +
+  scale_fill_gradient(low = "#FF8C00", high = "#EE2C2C") +
+  scale_x_continuous(breaks = NULL, expand = c(0, 0)) +
+  scale_y_continuous(breaks = NULL, expand = c(0, 0)) +
+  labs(title = "Cantidad de clics por ubicación en pantalla") +
+  coord_fixed() +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Grafico de los colores de los productos
+top_colores <- datos %>%
+  count(colour, sort = TRUE) %>%
+  top_n(5)
+
+colores_reales <- c(
+  "beige" = "#F5F5DC","black" = "#000000","blue" = "#0000FF","brown" = "#8B4513",
+  "burgundy" = "#800020","gray" = "#808080","green" = "#008000","navy blue" = "#000080",
+  "many colors" = "#CCCCCC","olive" = "#808000","pink" = "#FFC0CB","red" = "#FF0000",
+  "violet" = "#8A2BE2","white" = "#FFFFFF")
+
+ggplot(top_colores, aes(x = reorder(colour, n), y = n, fill = colour)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_manual(values = colores_reales) +
+  labs(
+    title = "Colores más frecuentes",
+    x = "Color",
+    y = "Cantidad"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#C1CDC1", color = NA),  # gris claro
+    panel.background = element_rect(fill = "#C1CDC1", color = NA),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+# Distribucion de precios por categoria
+ggplot(datos, aes(x = `page 1 (main category)`, y = price, fill = `page 1 (main category)`)) +
+  geom_boxplot(color = "black", outlier.color = "black", outlier.shape = 20, outlier.size = 3) +
+  scale_fill_manual(values = c(
+    "trousers" = "#2980B9",
+    "skirts" = "#C0392B",
+    "blouses" = "#27AE60",
+    "sale" = "#F1C40F"
+  )) +
+  labs(
+    title = "Distribución del precio por categoría de producto",
+    x = "Categorías",
+    y = "Precio"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "none")
+
+# Cantidad de productos que superan la media de la categoria o no
+table(datos$`price 2`)
 
 #==================================Consigna B===================================
 # Grafico de clicks por sesión
